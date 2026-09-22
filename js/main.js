@@ -1,10 +1,9 @@
-let nombre = "Agustina";
-console.log(nombre);
+let mensaje = prompt("¿Cuál es tu nombre?");
+const edad = parseInt(prompt("¿Cuántos años tienes?"), 10);
+const añoActual = parseInt(prompt("¿En qué año estamos?"), 10);
 
-const edad = 25; prompt(
-"Hola " + nombre + ", ¿cuántos años tienes?"
-);
-let añoActual = parseInt(prompt("¿En qué año estamos?"));   
-let añoNacimiento = añoActual - edad;
-console.log("Naciste en el año " + añoNacimiento);
 
+mensaje = "Hola " + mensaje +
+  ", naciste aproximadamente en el año " + (añoActual - edad) + ".";
+
+alert(mensaje);

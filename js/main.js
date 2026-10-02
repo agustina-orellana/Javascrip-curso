@@ -12,10 +12,13 @@
 // Segunda entrega //
 
 const meta = 1000;
+// Guarda el total ahorrado en la variable ahorro//
 let ahorro = 0;
 
+// Muestra la meta al usuario //
 alert("Tu meta es ahorrar $" + meta);
 
+// Mientras el ahorro sea menor a la meta, se le pedirá al usuario que ingrese un monto para agregar al ahorro //
 while (ahorro < meta) {
   const entrada = prompt("¿Cuánto dinero querés agregar?");
 
@@ -24,8 +27,10 @@ while (ahorro < meta) {
     break;
   }
 
+  //convierte el texto ingresado a numero //
   const monto = Number(entrada);
 
+  // Verifica que el monto ingresado sea un número mayor que cero //
   if (monto > 0 && Number.isFinite(monto)) {
     ahorro = ahorro + monto;
     alert("Llevás ahorrados $" + ahorro);
@@ -34,6 +39,7 @@ while (ahorro < meta) {
   }
 }
 
+// Si el ahorro es mayor o igual a la meta, se muestra un mensaje de felicitación //
 if (ahorro >= meta) {
   alert("¡Llegaste a tu meta!");
 }

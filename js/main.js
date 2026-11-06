@@ -1,27 +1,28 @@
 // Pre-entrega 5: simulador de compras con objetos //
+
 class Producto {
 constructor(nombre, precio, categoria, stock) {
-    this.nombre = nombre;
-    this.precio = precio;
-    this.categoria = categoria;
-    this.stock = stock;
+this.nombre = nombre;
+this.precio = precio;
+this.categoria = categoria;
+this.stock = stock;
 }
 
 vender(cantidad) {
-    if (!Number.isInteger(cantidad) || cantidad <= 0) {
+if (!Number.isInteger(cantidad) || cantidad <= 0) {
 console.log("La cantidad debe ser un entero mayor que cero.");
 return false;
-    }
+}
 
-    if (cantidad > this.stock) {
+if (cantidad > this.stock) {
 console.log("Stock insuficiente de " + this.nombre);
 return false;
-    }
+}
 
-    this.stock -= cantidad;
-    console.log(
+this.stock -= cantidad;
+console.log(
 "Venta de " + this.nombre + ". Stock restante: " + this.stock
-    );
+);
 
 return true;
 }
@@ -51,9 +52,9 @@ console.log("Total de la compra: $" + total);
 // Busca por nombre y devuelve el índice del objeto.
 function buscarIndiceProducto(nombre) {
 for (let indice = 0; indice < productos.length; indice++) {
-    if (productos[indice].nombre === nombre) {
+if (productos[indice].nombre === nombre) {
 return indice;
-    }
+}
 }
 
 return -1;
@@ -61,21 +62,21 @@ return -1;
 
 function mostrarProductos() {
 if (productos.length === 0) {
-    alert("No hay productos disponibles.");
-    return;
+alert("No hay productos disponibles.");
+return;
 }
 
 let listado = "PRODUCTOS DISPONIBLES\n";
 
 for (const producto of productos) {
-    const detalle =
-    "Producto: " + producto.nombre +
-    " | Precio: $" + producto.precio +
-    " | Categoría: " + producto.categoria +
-    " | Stock: " + producto.stock;
+const detalle =
+"Producto: " + producto.nombre +
+" | Precio: $" + producto.precio +
+" | Categoría: " + producto.categoria +
+" | Stock: " + producto.stock;
 
-    listado += detalle + "\n";
-    console.log(detalle);
+listado += detalle + "\n";
+console.log(detalle);
 }
 
 alert(listado);
@@ -86,37 +87,37 @@ function pedirNuevoProducto() {
 const entradaNombre = pedirDato("Ingresá el nombre del producto:");
 
 if (entradaNombre === null) {
-    return null;
+return null;
 }
 
 const nombre = entradaNombre.trim().toLowerCase();
 
 if (nombre === "") {
-    alert("El nombre no puede estar vacío.");
-    return null;
+alert("El nombre no puede estar vacío.");
+return null;
 }
 
 if (buscarIndiceProducto(nombre) !== -1) {
-    alert("Ese producto ya está en la lista.");
-    return null;
+alert("Ese producto ya está en la lista.");
+return null;
 }
 
 const entradaPrecio = pedirDato("Ingresá el precio:");
 
 if (entradaPrecio === null) {
-    return null;
+return null;
 }
 
 const entradaCategoria = pedirDato("Ingresá la categoría:");
 
 if (entradaCategoria === null) {
-    return null;
+return null;
 }
 
 const entradaStock = pedirDato("Ingresá el stock inicial:");
 
 if (entradaStock === null) {
-    return null;
+return null;
 }
 
 const precio = Number(entradaPrecio);
@@ -124,17 +125,17 @@ const categoria = entradaCategoria.trim().toLowerCase();
 const stock = Number(entradaStock);
 
 if (
-    !Number.isFinite(precio) ||
-    precio <= 0 ||
-    categoria === "" ||
-    entradaStock.trim() === "" ||
-    !Number.isInteger(stock) ||
-    stock < 0
+!Number.isFinite(precio) ||
+precio <= 0 ||
+categoria === "" ||
+entradaStock.trim() === "" ||
+!Number.isInteger(stock) ||
+stock < 0
 ) {
-    alert(
-    "Ingresá un precio positivo, una categoría y un stock entero de cero o más."
-    );
-    return null;
+alert(
+"Ingresá un precio positivo, una categoría y un stock entero de cero o más."
+);
+return null;
 }
 
 return new Producto(nombre, precio, categoria, stock);
@@ -144,7 +145,7 @@ function agregarProducto() {
 const nuevoProducto = pedirNuevoProducto();
 
 if (nuevoProducto === null) {
-    return;
+return;
 }
 
 productos.push(nuevoProducto);
@@ -153,8 +154,8 @@ alert("Se agregó el producto: " + nuevoProducto.nombre);
 
 function eliminarProducto() {
 if (productos.length === 0) {
-    alert("No hay productos para eliminar.");
-    return;
+alert("No hay productos para eliminar.");
+return;
 }
 
 const eliminado = productos.pop();
@@ -165,24 +166,24 @@ function buscarProducto() {
 const entrada = pedirDato("¿Qué producto querés buscar?");
 
 if (entrada === null) {
-    return;
+return;
 }
 
 const nombre = entrada.trim().toLowerCase();
 const indice = buscarIndiceProducto(nombre);
 
 if (indice === -1) {
-    alert("Ese producto no está en la lista.");
-    return;
+alert("Ese producto no está en la lista.");
+return;
 }
 
 const producto = productos[indice];
 
 alert(
-    "Producto: " + producto.nombre +
-    "\nÍndice: " + indice +
-    "\nPrecio: $" + producto.precio +
-    "\nStock: " + producto.stock
+"Producto: " + producto.nombre +
+"\nÍndice: " + indice +
+"\nPrecio: $" + producto.precio +
+"\nStock: " + producto.stock
 );
 }
 
@@ -190,21 +191,21 @@ function reemplazarProducto() {
 const entrada = pedirDato("¿Qué producto querés reemplazar?");
 
 if (entrada === null) {
-    return;
+return;
 }
 
 const nombre = entrada.trim().toLowerCase();
 const indice = buscarIndiceProducto(nombre);
 
 if (indice === -1) {
-    alert("Ese producto no está en la lista.");
-    return;
+alert("Ese producto no está en la lista.");
+return;
 }
 
 const nuevoProducto = pedirNuevoProducto();
 
 if (nuevoProducto === null) {
-    return;
+return;
 }
 
 productos.splice(indice, 1, nuevoProducto);
@@ -213,8 +214,8 @@ alert("Se reemplazó " + nombre + " por " + nuevoProducto.nombre);
 
 function realizarCompra() {
 if (productos.length === 0) {
-    alert("No hay productos para comprar.");
-    return;
+alert("No hay productos para comprar.");
+return;
 }
 
 mostrarProductos();
@@ -222,50 +223,50 @@ mostrarProductos();
 const entrada = pedirDato("¿Qué producto querés comprar?");
 
 if (entrada === null) {
-    return;
+return;
 }
 
 const nombre = entrada.trim().toLowerCase();
 const indice = buscarIndiceProducto(nombre);
 
 if (indice === -1) {
-    alert("Ese producto no está disponible.");
-    return;
+alert("Ese producto no está disponible.");
+return;
 }
 
 const entradaCantidad = pedirDato("¿Cuántas unidades querés comprar?");
 
 if (entradaCantidad === null) {
-    return;
+return;
 }
 
 const cantidad = Number(entradaCantidad);
 
 if (!Number.isInteger(cantidad) || cantidad <= 0) {
-    alert("Ingresá una cantidad entera mayor que cero.");
-    return;
+alert("Ingresá una cantidad entera mayor que cero.");
+return;
 }
 
 const producto = productos[indice];
 const total = calcularTotal(producto.precio, cantidad);
 
 if (!Number.isFinite(total)) {
-    alert("El total es demasiado grande. Revisá los valores.");
-    return;
+alert("El total es demasiado grande. Revisá los valores.");
+return;
 }
 
   // Ejecuta el método de instancia que modifica el stock.
 const ventaRealizada = producto.vender(cantidad);
 
 if (ventaRealizada) {
-    mostrarTotal(total);
-    alert("Stock restante de " + producto.nombre + ": " + producto.stock);
+mostrarTotal(total);
+alert("Stock restante de " + producto.nombre + ": " + producto.stock);
 
-    // Verificación de las propiedades después de la venta.
-    console.log("Producto después de la compra:", producto);
-    console.log("Stock final: " + producto.stock);
+// Verificación de las propiedades después de la venta.
+console.log("Producto después de la compra:", producto);
+console.log("Stock final: " + producto.stock);
 } else {
-    alert("Stock insuficiente. Unidades disponibles: " + producto.stock);
+alert("Stock insuficiente. Unidades disponibles: " + producto.stock);
 }
 }
 
@@ -273,41 +274,41 @@ let continuar = true;
 
 while (continuar) {
 const opcion = pedirDato(
-    "SIMULADOR DE COMPRAS\n" +
-    "1. Mostrar productos\n" +
-    "2. Agregar producto\n" +
-    "3. Eliminar el último producto\n" +
-    "4. Buscar producto\n" +
-    "5. Reemplazar producto\n" +
-    "6. Realizar una compra\n" +
-    "0. Salir"
+"SIMULADOR DE COMPRAS\n" +
+"1. Mostrar productos\n" +
+"2. Agregar producto\n" +
+"3. Eliminar el último producto\n" +
+"4. Buscar producto\n" +
+"5. Reemplazar producto\n" +
+"6. Realizar una compra\n" +
+"0. Salir"
 );
 
 switch (opcion) {
-    case "1":
-    mostrarProductos();
-    break;
-    case "2":
-    agregarProducto();
-    break;
-    case "3":
-    eliminarProducto();
-    break;
-    case "4":
-    buscarProducto();
-    break;
-    case "5":
-    reemplazarProducto();
-    break;
-    case "6":
-    realizarCompra();
-    break;
-    case "0":
-    case null:
-    continuar = false;
-    alert("¡Gracias por usar el simulador!");
-    break;
-    default:
-    alert("Elegí una opción válida.");
+case "1":
+mostrarProductos();
+break;
+case "2":
+agregarProducto();
+break;
+case "3":
+eliminarProducto();
+break;
+case "4":
+buscarProducto();
+break;
+case "5":
+reemplazarProducto();
+break;
+case "6":
+realizarCompra();
+break;
+case "0":
+case null:
+continuar = false;
+alert("¡Gracias por usar el simulador!");
+break;
+default:
+alert("Elegí una opción válida.");
 }
 }

@@ -1,26 +1,64 @@
+// Pre-entrega 5: simulador de compras con objetos //
+class Producto {
+constructor(nombre, precio, categoria, stock) {
+    this.nombre = nombre;
+    this.precio = precio;
+    this.categoria = categoria;
+    this.stock = stock;
+}
 
+vender(cantidad) {
+    if (!Number.isInteger(cantidad) || cantidad <= 0) {
+console.log("La cantidad debe ser un entero mayor que cero.");
+return false;
+    }
 
+    if (cantidad > this.stock) {
+console.log("Stock insuficiente de " + this.nombre);
+return false;
+    }
 
-// Cuarta entrega: simulador de compras con arrays //
+    this.stock -= cantidad;
+    console.log(
+"Venta de " + this.nombre + ". Stock restante: " + this.stock
+    );
 
-// Colección inicial con cinco productos.
-const productos = ["pan", "leche", "arroz", "huevos", "manzanas"];
+return true;
+}
+}
 
-// ENTRADA: solicita un dato al usuario.
+// Instancias creadas con new y guardadas en constantes.
+// Los precios son de ejemplo.
+const pan = new Producto("pan", 1500, "panadería", 20);
+const leche = new Producto("leche", 1800, "lácteos", 15);
+const arroz = new Producto("arroz", 2200, "almacén", 30);
+const huevos = new Producto("huevos", 300, "almacén", 40);
+const manzanas = new Producto("manzanas", 500, "frutas", 25);
+
+const productos = [pan, leche, arroz, huevos, manzanas];
+
 function pedirDato(mensaje) {
 return prompt(mensaje);
 }
 
-// PROCESAMIENTO: calcula el total de la compra.
 const calcularTotal = (precio, cantidad) => precio * cantidad;
 
-// SALIDA: muestra el total.
 function mostrarTotal(total) {
 alert("El total de tu compra es: $" + total);
 console.log("Total de la compra: $" + total);
 }
 
-// Recorre la colección usando for...of.
+// Busca por nombre y devuelve el índice del objeto.
+function buscarIndiceProducto(nombre) {
+for (let indice = 0; indice < productos.length; indice++) {
+    if (productos[indice].nombre === nombre) {
+return indice;
+    }
+}
+
+return -1;
+}
+
 function mostrarProductos() {
 if (productos.length === 0) {
     alert("No hay productos disponibles.");
@@ -28,41 +66,91 @@ if (productos.length === 0) {
 }
 
 let listado = "PRODUCTOS DISPONIBLES\n";
-console.log("--- Productos disponibles ---");
 
 for (const producto of productos) {
-    listado += "Producto: " + producto + "\n";
-    console.log("Producto: " + producto);
+    const detalle =
+    "Producto: " + producto.nombre +
+    " | Precio: $" + producto.precio +
+    " | Categoría: " + producto.categoria +
+    " | Stock: " + producto.stock;
+
+    listado += detalle + "\n";
+    console.log(detalle);
 }
 
 alert(listado);
 }
 
-// Agrega un producto al final con push.
-function agregarProducto() {
-const entrada = pedirDato("Ingresá el producto que querés agregar:");
+// Solicita y valida los datos para crear un objeto.
+function pedirNuevoProducto() {
+const entradaNombre = pedirDato("Ingresá el nombre del producto:");
 
-if (entrada === null) {
-    return;
+if (entradaNombre === null) {
+    return null;
 }
 
-const producto = entrada.trim().toLowerCase();
+const nombre = entradaNombre.trim().toLowerCase();
 
-if (producto === "") {
+if (nombre === "") {
     alert("El nombre no puede estar vacío.");
-    return;
+    return null;
 }
 
-if (productos.indexOf(producto) !== -1) {
+if (buscarIndiceProducto(nombre) !== -1) {
     alert("Ese producto ya está en la lista.");
+    return null;
+}
+
+const entradaPrecio = pedirDato("Ingresá el precio:");
+
+if (entradaPrecio === null) {
+    return null;
+}
+
+const entradaCategoria = pedirDato("Ingresá la categoría:");
+
+if (entradaCategoria === null) {
+    return null;
+}
+
+const entradaStock = pedirDato("Ingresá el stock inicial:");
+
+if (entradaStock === null) {
+    return null;
+}
+
+const precio = Number(entradaPrecio);
+const categoria = entradaCategoria.trim().toLowerCase();
+const stock = Number(entradaStock);
+
+if (
+    !Number.isFinite(precio) ||
+    precio <= 0 ||
+    categoria === "" ||
+    entradaStock.trim() === "" ||
+    !Number.isInteger(stock) ||
+    stock < 0
+) {
+    alert(
+    "Ingresá un precio positivo, una categoría y un stock entero de cero o más."
+    );
+    return null;
+}
+
+return new Producto(nombre, precio, categoria, stock);
+}
+
+function agregarProducto() {
+const nuevoProducto = pedirNuevoProducto();
+
+if (nuevoProducto === null) {
     return;
 }
 
-productos.push(producto);
-alert("Se agregó el producto: " + producto);
+productos.push(nuevoProducto);
+alert("Se agregó el producto: " + nuevoProducto.nombre);
 }
 
-// Elimina el último producto con pop y guarda su nombre.
 function eliminarProducto() {
 if (productos.length === 0) {
     alert("No hay productos para eliminar.");
@@ -70,10 +158,9 @@ if (productos.length === 0) {
 }
 
 const eliminado = productos.pop();
-alert("Se ha eliminado el elemento: " + eliminado);
+alert("Se ha eliminado el elemento: " + eliminado.nombre);
 }
 
-// Busca un producto e informa su índice.
 function buscarProducto() {
 const entrada = pedirDato("¿Qué producto querés buscar?");
 
@@ -81,17 +168,24 @@ if (entrada === null) {
     return;
 }
 
-const producto = entrada.trim().toLowerCase();
-const indice = productos.indexOf(producto);
+const nombre = entrada.trim().toLowerCase();
+const indice = buscarIndiceProducto(nombre);
 
-if (indice !== -1) {
-    alert("El producto " + producto + " está en el índice " + indice);
-} else {
+if (indice === -1) {
     alert("Ese producto no está en la lista.");
-}
+    return;
 }
 
-// Reemplaza un producto en el índice encontrado con splice.
+const producto = productos[indice];
+
+alert(
+    "Producto: " + producto.nombre +
+    "\nÍndice: " + indice +
+    "\nPrecio: $" + producto.precio +
+    "\nStock: " + producto.stock
+);
+}
+
 function reemplazarProducto() {
 const entrada = pedirDato("¿Qué producto querés reemplazar?");
 
@@ -99,61 +193,43 @@ if (entrada === null) {
     return;
 }
 
-const producto = entrada.trim().toLowerCase();
-const indice = productos.indexOf(producto);
+const nombre = entrada.trim().toLowerCase();
+const indice = buscarIndiceProducto(nombre);
 
 if (indice === -1) {
     alert("Ese producto no está en la lista.");
     return;
 }
 
-const nuevaEntrada = pedirDato("Ingresá el nombre del nuevo producto:");
+const nuevoProducto = pedirNuevoProducto();
 
-if (nuevaEntrada === null) {
-    return;
-}
-
-const nuevoProducto = nuevaEntrada.trim().toLowerCase();
-
-if (nuevoProducto === "") {
-    alert("El nombre no puede estar vacío.");
-    return;
-}
-
-if (productos.indexOf(nuevoProducto) !== -1) {
-    alert("Ese producto ya está en la lista.");
+if (nuevoProducto === null) {
     return;
 }
 
 productos.splice(indice, 1, nuevoProducto);
-alert("Se reemplazó " + producto + " por " + nuevoProducto);
+alert("Se reemplazó " + nombre + " por " + nuevoProducto.nombre);
 }
 
-// Integra el cálculo de la tercera entrega con la lista de productos.
 function realizarCompra() {
 if (productos.length === 0) {
-    alert("Agregá productos antes de realizar una compra.");
+    alert("No hay productos para comprar.");
     return;
 }
 
 mostrarProductos();
 
-const entradaProducto = pedirDato("¿Qué producto querés comprar?");
+const entrada = pedirDato("¿Qué producto querés comprar?");
 
-if (entradaProducto === null) {
+if (entrada === null) {
     return;
 }
 
-const producto = entradaProducto.trim().toLowerCase();
+const nombre = entrada.trim().toLowerCase();
+const indice = buscarIndiceProducto(nombre);
 
-if (productos.indexOf(producto) === -1) {
+if (indice === -1) {
     alert("Ese producto no está disponible.");
-    return;
-}
-
-const entradaPrecio = pedirDato("Ingresá el precio de " + producto + ":");
-
-if (entradaPrecio === null) {
     return;
 }
 
@@ -163,30 +239,36 @@ if (entradaCantidad === null) {
     return;
 }
 
-const precio = Number(entradaPrecio);
 const cantidad = Number(entradaCantidad);
 
-if (
-    Number.isFinite(precio) &&
-    precio > 0 &&
-    Number.isInteger(cantidad) &&
-    cantidad > 0
-) {
-    const total = calcularTotal(precio, cantidad);
+if (!Number.isInteger(cantidad) || cantidad <= 0) {
+    alert("Ingresá una cantidad entera mayor que cero.");
+    return;
+}
 
-    if (!Number.isFinite(total)) {
+const producto = productos[indice];
+const total = calcularTotal(producto.precio, cantidad);
+
+if (!Number.isFinite(total)) {
     alert("El total es demasiado grande. Revisá los valores.");
     return;
-    }
+}
 
-    console.log("Producto comprado: " + producto);
+  // Ejecuta el método de instancia que modifica el stock.
+const ventaRealizada = producto.vender(cantidad);
+
+if (ventaRealizada) {
     mostrarTotal(total);
+    alert("Stock restante de " + producto.nombre + ": " + producto.stock);
+
+    // Verificación de las propiedades después de la venta.
+    console.log("Producto después de la compra:", producto);
+    console.log("Stock final: " + producto.stock);
 } else {
-    alert("Ingresá un precio válido y una cantidad entera mayor que cero.");
+    alert("Stock insuficiente. Unidades disponibles: " + producto.stock);
 }
 }
 
-// Menú principal del simulador.
 let continuar = true;
 
 while (continuar) {
@@ -222,9 +304,9 @@ switch (opcion) {
     break;
     case "0":
     case null:
-continuar = false;
-alert("¡Gracias por usar el simulador!");
-break;
+    continuar = false;
+    alert("¡Gracias por usar el simulador!");
+    break;
     default:
     alert("Elegí una opción válida.");
 }

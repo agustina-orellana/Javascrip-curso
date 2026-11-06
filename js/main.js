@@ -1,12 +1,11 @@
 // Pre-entrega 5: simulador de compras con objetos //
-
 class Producto {
 constructor(nombre, precio, categoria, stock) {
 this.nombre = nombre;
 this.precio = precio;
 this.categoria = categoria;
 this.stock = stock;
-}
+};
 
 vender(cantidad) {
 if (!Number.isInteger(cantidad) || cantidad <= 0) {

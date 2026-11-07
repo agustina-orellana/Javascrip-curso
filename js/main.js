@@ -1,4 +1,4 @@
-// Pre-entrega 5: simulador de compras con objetos //
+// Entrega 6: simulador de compras con funciones de orden superior //
 class Producto {
 constructor(nombre, precio, categoria, stock) {
 this.nombre = nombre;
@@ -48,15 +48,9 @@ alert("El total de tu compra es: $" + total);
 console.log("Total de la compra: $" + total);
 }
 
-// Busca por nombre y devuelve el índice del objeto.
+// findIndex localiza el índice para reemplazar productos.
 function buscarIndiceProducto(nombre) {
-for (let indice = 0; indice < productos.length; indice++) {
-if (productos[indice].nombre === nombre) {
-return indice;
-}
-}
-
-return -1;
+return productos.findIndex(producto => producto.nombre === nombre);
 }
 
 function mostrarProductos() {
@@ -169,21 +163,15 @@ return;
 }
 
 const nombre = entrada.trim().toLowerCase();
-const indice = buscarIndiceProducto(nombre);
-
-if (indice === -1) {
+// Búsqueda con find: devuelve el objeto que coincide con el nombre.
+const producto = productos.find(producto => producto.nombre === nombre);
+if (!producto) {
 alert("Ese producto no está en la lista.");
+console.log("Producto no encontrado:", nombre);
 return;
 }
-
-const producto = productos[indice];
-
-alert(
-"Producto: " + producto.nombre +
-"\nÍndice: " + indice +
-"\nPrecio: $" + producto.precio +
-"\nStock: " + producto.stock
-);
+console.log("Producto encontrado:", producto);
+alert("Producto: " + producto.nombre + "\nPrecio: $" + producto.precio + "\nCategoría: " + producto.categoria + "\nStock: " + producto.stock);
 }
 
 function reemplazarProducto() {
@@ -269,6 +257,57 @@ alert("Stock insuficiente. Unidades disponibles: " + producto.stock);
 }
 }
 
+// Búsqueda con filter: productos con stock dentro del presupuesto por unidad.
+function filtrarPorPresupuesto() {
+const entrada = pedirDato("¿Cuánto podés gastar como máximo por unidad?");
+if (entrada === null) return;
+const presupuesto = Number(entrada);
+if (entrada.trim() === "" || !Number.isFinite(presupuesto) || presupuesto <= 0) {
+alert("Ingresá un presupuesto positivo.");
+return;
+}
+const encontrados = productos.filter(producto => producto.precio <= presupuesto && producto.stock > 0);
+console.log("Productos dentro del presupuesto:", encontrados);
+if (encontrados.length === 0) {
+alert("No hay productos con stock dentro de ese presupuesto.");
+return;
+}
+let listado = "PRODUCTOS DENTRO DE TU PRESUPUESTO\n";
+for (const producto of encontrados) {
+listado += producto.nombre + " | $" + producto.precio + " | Stock: " + producto.stock + "\n";
+}
+alert(listado);
+}
+
+// Transformación con map: crea una nueva lista con precios con descuento.
+// Esta simulación conserva los precios originales del catálogo.
+function simularDescuento() {
+if (productos.length === 0) {
+alert("No hay productos para simular un descuento.");
+return;
+}
+const entrada = pedirDato("¿Qué porcentaje de descuento querés simular? (mayor que 0 y hasta 100)");
+if (entrada === null) return;
+const porcentaje = Number(entrada);
+if (!Number.isFinite(porcentaje) || porcentaje <= 0 || porcentaje > 100) {
+alert("Ingresá un porcentaje mayor que cero y menor o igual a 100.");
+return;
+}
+const productosConDescuento = productos.map(producto => ({
+nombre: producto.nombre,
+precioOriginal: producto.precio,
+precioConDescuento: Number((producto.precio * (1 - porcentaje / 100)).toFixed(2)),
+categoria: producto.categoria,
+stock: producto.stock
+}));
+console.log("Simulación de descuento del " + porcentaje + "%:", productosConDescuento);
+let listado = "SIMULACIÓN DE DESCUENTO: " + porcentaje + "%\n";
+for (const producto of productosConDescuento) {
+listado += producto.nombre + ": $" + producto.precioOriginal + " → $" + producto.precioConDescuento + "\n";
+}
+alert(listado + "\nEsta simulación no modifica los precios de compra.");
+}
+
 let continuar = true;
 
 while (continuar) {
@@ -280,6 +319,8 @@ const opcion = pedirDato(
 "4. Buscar producto\n" +
 "5. Reemplazar producto\n" +
 "6. Realizar una compra\n" +
+"7. Filtrar productos por presupuesto\n" +
+"8. Simular un descuento\n" +
 "0. Salir"
 );
 
@@ -301,6 +342,12 @@ reemplazarProducto();
 break;
 case "6":
 realizarCompra();
+break;
+case "7":
+filtrarPorPresupuesto();
+break;
+case "8":
+simularDescuento();
 break;
 case "0":
 case null:

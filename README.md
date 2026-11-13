@@ -1,4 +1,4 @@
-# Simulador de compras · Entrega 7
+# Simulador de compras · Pre-entrega 8
 
 Simulador de compras desarrollado con HTML, CSS y JavaScript. El catálogo inicial se genera a partir de un array de instancias de la clase `Producto`.
 
@@ -15,7 +15,9 @@ Abrí `index.html` en tu navegador.
 7. **Filtrar por presupuesto**. Ingresá el máximo por unidad para ver los productos disponibles dentro de ese límite.
 8. **Simular un descuento**. Ingresá un porcentaje para ver el precio de referencia. La compra usa el precio original.
 
-Los cambios duran hasta que se recarga la página.
+9. **Vaciar el catálogo**. Elegí **Vaciar catálogo** y confirmá.
+
+El catálogo se guarda en localStorage al agregar, editar, comprar, eliminar o vaciar. Al recargar se recuperan los productos y su stock, incluso si el catálogo quedó vacío. Probá desde la misma dirección en el navegador.
 
 ## Archivos
 

@@ -1,4 +1,4 @@
-# Simulador de compras · Pre-entrega 8
+# Simulador de compras · Pre-entrega 9
 
 Simulador de compras desarrollado con HTML, CSS y JavaScript. El catálogo inicial se genera a partir de un array de instancias de la clase `Producto`.
 
@@ -18,6 +18,12 @@ Abrí `index.html` en tu navegador.
 9. **Vaciar el catálogo**. Elegí **Vaciar catálogo** y confirmá.
 
 El catálogo se guarda en localStorage al agregar, editar, comprar, eliminar o vaciar. Al recargar se recuperan los productos y su stock, incluso si el catálogo quedó vacío. Probá desde la misma dirección en el navegador.
+
+## Cupón simulado
+
+Tres segundos después de abrir el simulador aparece un recordatorio. Seleccioná **Consultar cupón** para cargar y aplicar un descuento simulado del 10 %. Los precios de compra siguen usando el valor original.
+
+Para probar el manejo de errores, vaciá el catálogo y consultá el cupón. Se muestra un mensaje y el botón vuelve a habilitarse. Agregá un producto y consultá nuevamente.
 
 ## Archivos
 

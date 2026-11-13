@@ -6,17 +6,18 @@ class Producto {
     this.stock = stock;
   }
 
-vender(cantidad) {
-if (!Number.isSafeInteger(cantidad) || cantidad <= 0 || cantidad > this.stock) {
-return false;
+  vender(cantidad) {
+    if (!Number.isSafeInteger(cantidad) || cantidad <= 0 || cantidad > this.stock) {
+      return false;
+    }
+
+    this.stock -= cantidad;
+    return true;
+  }
 }
 
-this.stock -= cantidad;
-return true;
-}
-}
-
-const productos = [
+const claveCatalogo = "simulador-compras.catalogo";
+let productos = [
   new Producto("pan", 1500, "panadería", 20),
   new Producto("leche", 1800, "lácteos", 15),
   new Producto("arroz", 2200, "almacén", 30),
@@ -24,6 +25,8 @@ const productos = [
   new Producto("manzanas", 500, "frutas", 25)
 ];
 
+const vaciar = document.querySelector("#vaciar");
+const tituloEliminacion = document.querySelector("#titulo-eliminacion");
 const formulario = document.querySelector("#producto");
 const tituloFormulario = document.querySelector("#form-title");
 const guardar = document.querySelector("#guardar");
@@ -49,7 +52,30 @@ function mostrarEstado(mensaje, error = false) {
   estado.textContent = mensaje;
 }
 
+function cargarCatalogo() {
+  try {
+    const guardados = JSON.parse(localStorage.getItem(claveCatalogo) ?? "null");
+    productos = guardados?.map(({ nombre, precio, categoria, stock }) =>
+      new Producto(nombre, precio, categoria, stock)
+    ) ?? productos;
+  } catch {
+    mostrarEstado("No se pudo leer el catálogo guardado. Se muestran los productos iniciales.", true);
+  }
+}
+
+function guardarCatalogo(siguienteCatalogo) {
+  try {
+    localStorage.setItem(claveCatalogo, JSON.stringify(siguienteCatalogo));
+    productos = siguienteCatalogo;
+    return true;
+  } catch {
+    mostrarEstado("No se pudo guardar el cambio en el navegador.", true);
+    return false;
+  }
+}
+
 function renderizarProductos() {
+  vaciar.disabled = productos.length === 0;
   const consulta = normalizar(buscar.value);
   const maximo = presupuesto.valueAsNumber;
   const porcentaje = descuento.valueAsNumber;
@@ -118,10 +144,11 @@ formulario.addEventListener("submit", evento => {
 
   const nuevo = new Producto(nombre, precio, categoria, stock);
   const mensaje = productoEditado ? `Se actualizó ${nombre}.` : `Se agregó ${nombre}.`;
-  if (productoEditado) {
-    productos.splice(productos.indexOf(productoEditado), 1, nuevo);
-  } else {
-    productos.push(nuevo);
+  const siguienteCatalogo = productoEditado
+    ? productos.map(producto => producto === productoEditado ? nuevo : producto)
+    : [...productos, nuevo];
+  if (!guardarCatalogo(siguienteCatalogo)) {
+    return;
   }
 
   restablecerFormulario();
@@ -136,6 +163,18 @@ cancelar.addEventListener("click", () => {
   mostrarEstado("Edición cancelada.");
 });
 
+vaciar.addEventListener("click", () => abrirConfirmacion(null));
+
+function abrirConfirmacion(producto) {
+  productoParaEliminar = producto;
+  tituloEliminacion.textContent = producto ? "Eliminar producto" : "Vaciar catálogo";
+  detalleEliminacion.textContent = producto
+    ? "¿Querés eliminar " + producto.nombre + " del catálogo?"
+    : "¿Querés eliminar todos los productos del catálogo?";
+  confirmarEliminacion.returnValue = "";
+  confirmarEliminacion.showModal();
+}
+
 confirmarEliminacion.addEventListener("close", () => {
   const producto = productoParaEliminar;
   productoParaEliminar = null;
@@ -145,13 +184,16 @@ confirmarEliminacion.addEventListener("close", () => {
     return;
   }
 
-  productos.splice(productos.indexOf(producto), 1);
-  if (producto === productoEditado) {
+  const siguienteCatalogo = producto ? productos.filter(item => item !== producto) : [];
+  if (!guardarCatalogo(siguienteCatalogo)) {
+    return;
+  }
+  if (!producto || producto === productoEditado) {
     restablecerFormulario();
   }
   renderizarProductos();
   buscar.focus();
-  mostrarEstado(`Se eliminó ${producto.nombre}.`);
+  mostrarEstado(producto ? `Se eliminó ${producto.nombre}.` : "Se vació el catálogo.");
 });
 
 catalogo.addEventListener("click", evento => {
@@ -164,6 +206,8 @@ catalogo.addEventListener("click", evento => {
   const indice = Number(tarjeta.dataset.indice);
   const producto = productos[indice];
 
+  const { nombre, precio, categoria, stock } = producto;
+
   switch (boton.dataset.accion) {
     case "comprar": {
       const cantidad = tarjeta.querySelector("input").valueAsNumber;
@@ -172,30 +216,38 @@ catalogo.addEventListener("click", evento => {
         return;
       }
 
-      const total = producto.precio * cantidad;
+      const total = precio * cantidad;
       if (!Number.isFinite(total)) {
         mostrarEstado("El total es demasiado grande. Revisá la cantidad.", true);
         return;
       }
 
-      if (!producto.vender(cantidad)) {
+      const actualizado = new Producto(nombre, precio, categoria, stock);
+      if (!actualizado.vender(cantidad)) {
         mostrarEstado(`Stock insuficiente de ${producto.nombre}. Disponibles: ${producto.stock}.`, true);
         return;
       }
 
+      const siguienteCatalogo = [...productos];
+      siguienteCatalogo[indice] = actualizado;
+      if (!guardarCatalogo(siguienteCatalogo)) {
+        return;
+      }
+
       if (producto === productoEditado) {
-        formulario.elements.stock.value = producto.stock;
+        productoEditado = actualizado;
+        formulario.elements.stock.value = actualizado.stock;
       }
       renderizarProductos();
-      mostrarEstado(`Compraste ${cantidad} unidad(es) de ${producto.nombre} por ${moneda.format(total)}. Stock restante: ${producto.stock}.`);
+      mostrarEstado(`Compraste ${cantidad} unidad(es) de ${producto.nombre} por ${moneda.format(total)}. Stock restante: ${actualizado.stock}.`);
       break;
     }
     case "editar":
       productoEditado = producto;
-      formulario.elements.nombre.value = producto.nombre;
-      formulario.elements.categoria.value = producto.categoria;
-      formulario.elements.precio.value = producto.precio;
-      formulario.elements.stock.value = producto.stock;
+      formulario.elements.nombre.value = nombre;
+      formulario.elements.categoria.value = categoria;
+      formulario.elements.precio.value = precio;
+      formulario.elements.stock.value = stock;
       tituloFormulario.textContent = `Editar ${producto.nombre}`;
       guardar.textContent = "Guardar cambios";
       cancelar.hidden = false;
@@ -203,10 +255,7 @@ catalogo.addEventListener("click", evento => {
       mostrarEstado(`Podés modificar los datos de ${producto.nombre} en el formulario.`);
       break;
     case "eliminar":
-      productoParaEliminar = producto;
-      detalleEliminacion.textContent = `¿Querés eliminar ${producto.nombre} del catálogo?`;
-      confirmarEliminacion.returnValue = "";
-      confirmarEliminacion.showModal();
+      abrirConfirmacion(producto);
       break;
   }
 });
@@ -222,4 +271,5 @@ catalogo.addEventListener("click", evento => {
   });
 });
 
+cargarCatalogo();
 renderizarProductos();

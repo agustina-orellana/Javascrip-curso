@@ -34,6 +34,9 @@ const cancelar = document.querySelector("#cancelar");
 const buscar = document.querySelector("#buscar");
 const presupuesto = document.querySelector("#presupuesto");
 const descuento = document.querySelector("#descuento");
+const avisoCupon = document.querySelector("#aviso-cupon");
+const consultarCupon = document.querySelector("#consultar-cupon");
+const estadoCupon = document.querySelector("#estado-cupon");
 const catalogo = document.querySelector("#catalogo");
 const resultados = document.querySelector("#resultados");
 const estado = document.querySelector("#estado");
@@ -271,5 +274,41 @@ catalogo.addEventListener("click", evento => {
   });
 });
 
+function obtenerCupon() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (productos.length === 0) {
+        reject(new Error("Agregá un producto al catálogo para consultar el cupón."));
+        return;
+      }
+      resolve({ codigo: "AHORRO10", porcentaje: 10 });
+    }, 900);
+  });
+}
+
+consultarCupon.addEventListener("click", async () => {
+  consultarCupon.disabled = true;
+  estadoCupon.textContent = "Consultando cupón…";
+
+  try {
+    const { codigo, porcentaje } = await obtenerCupon();
+    descuento.value = porcentaje;
+    renderizarProductos();
+    estadoCupon.textContent = `Cupón ${codigo} aplicado a la simulación (${porcentaje} %).`;
+  } catch (error) {
+    estadoCupon.textContent = `No se pudo aplicar el cupón. ${error.message}`;
+  } finally {
+    consultarCupon.disabled = false;
+  }
+});
+
+descuento.addEventListener("input", () => {
+  estadoCupon.textContent = "";
+});
+
 cargarCatalogo();
 renderizarProductos();
+
+setTimeout(() => {
+  avisoCupon.textContent = "Podés consultar un cupón para simular un descuento en el catálogo.";
+}, 3000);

@@ -1,16 +1,44 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simulador de compras - Entrega 6</title>
-<script src="./js/main.js" defer></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de compras | Entrega 7</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="js/main.js" defer></script>
 </head>
 <body>
-<h1>Bienvenido a mi página</h1>
-<p>Consula productos, administra el catalogo y realiza compras desde el menu</p>
-<p>Buscá por nombre, filtrá por presupuesto y simulá descuentos.</p>
-
-
+<header><div><p>Entrega 7 · JavaScript</p><h1>Simulador de compras</h1><p>Explorá el catálogo y registrá compras.</p></div></header>
+<main>
+<section aria-labelledby="form-title">
+<h2 id="form-title">Agregar producto</h2>
+<form id="producto" novalidate>
+<label>Nombre<input name="nombre" required maxlength="80"></label>
+<label>Categoría<input name="categoria" required maxlength="80"></label>
+<label>Precio por unidad<input name="precio" type="number" min="0.01" step="0.01" required></label>
+<label>Stock inicial<input name="stock" type="number" min="0" step="1" required></label>
+<div class="actions"><button id="guardar">Agregar producto</button><button type="button" id="cancelar" hidden>Cancelar</button></div>
+</form>
+</section>
+<p id="estado" role="status" aria-live="polite"></p>
+<section aria-labelledby="catalogo-title">
+<h2 id="catalogo-title">Catálogo</h2>
+<div class="filters">
+<label>Buscar por nombre<input id="buscar" type="search" placeholder="Ej. manzanas"></label>
+<label>Presupuesto por unidad<input id="presupuesto" type="number" min="0" step="0.01" placeholder="Sin límite"></label>
+<label>Simular descuento (%)<input id="descuento" type="number" min="0" max="100" step="any" placeholder="Ej. 15"></label>
+</div>
+<p id="resultados" role="status"></p>
+<div id="catalogo"></div>
+</section>
+</main>
+<dialog id="confirmar-eliminacion" aria-labelledby="titulo-eliminacion">
+<h2 id="titulo-eliminacion">Eliminar producto</h2>
+<p id="detalle-eliminacion"></p>
+<form method="dialog" class="actions">
+<button class="secundario" value="cancelar" autofocus>Cancelar</button>
+<button value="eliminar">Confirmar eliminación</button>
+</form>
+</dialog>
 </body>
 </html>

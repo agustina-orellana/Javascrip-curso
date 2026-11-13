@@ -1,360 +1,225 @@
-// Entrega 6: simulador de compras con funciones de orden superior //
 class Producto {
-constructor(nombre, precio, categoria, stock) {
-this.nombre = nombre;
-this.precio = precio;
-this.categoria = categoria;
-this.stock = stock;
-};
+  constructor(nombre, precio, categoria, stock) {
+    this.nombre = nombre;
+    this.precio = precio;
+    this.categoria = categoria;
+    this.stock = stock;
+  }
 
 vender(cantidad) {
-if (!Number.isInteger(cantidad) || cantidad <= 0) {
-console.log("La cantidad debe ser un entero mayor que cero.");
-return false;
-}
-
-if (cantidad > this.stock) {
-console.log("Stock insuficiente de " + this.nombre);
+if (!Number.isSafeInteger(cantidad) || cantidad <= 0 || cantidad > this.stock) {
 return false;
 }
 
 this.stock -= cantidad;
-console.log(
-"Venta de " + this.nombre + ". Stock restante: " + this.stock
-);
-
 return true;
 }
 }
 
-// Instancias creadas con new y guardadas en constantes.
-// Los precios son de ejemplo.
-const pan = new Producto("pan", 1500, "panadería", 20);
-const leche = new Producto("leche", 1800, "lácteos", 15);
-const arroz = new Producto("arroz", 2200, "almacén", 30);
-const huevos = new Producto("huevos", 300, "almacén", 40);
-const manzanas = new Producto("manzanas", 500, "frutas", 25);
+const productos = [
+  new Producto("pan", 1500, "panadería", 20),
+  new Producto("leche", 1800, "lácteos", 15),
+  new Producto("arroz", 2200, "almacén", 30),
+  new Producto("huevos", 300, "almacén", 40),
+  new Producto("manzanas", 500, "frutas", 25)
+];
 
-const productos = [pan, leche, arroz, huevos, manzanas];
+const formulario = document.querySelector("#producto");
+const tituloFormulario = document.querySelector("#form-title");
+const guardar = document.querySelector("#guardar");
+const cancelar = document.querySelector("#cancelar");
+const buscar = document.querySelector("#buscar");
+const presupuesto = document.querySelector("#presupuesto");
+const descuento = document.querySelector("#descuento");
+const catalogo = document.querySelector("#catalogo");
+const resultados = document.querySelector("#resultados");
+const estado = document.querySelector("#estado");
+const confirmarEliminacion = document.querySelector("#confirmar-eliminacion");
+const detalleEliminacion = document.querySelector("#detalle-eliminacion");
+const moneda = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
+let productoEditado = null;
+let productoParaEliminar = null;
 
-function pedirDato(mensaje) {
-return prompt(mensaje);
+function normalizar(texto) {
+  return texto.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-const calcularTotal = (precio, cantidad) => precio * cantidad;
-
-function mostrarTotal(total) {
-alert("El total de tu compra es: $" + total);
-console.log("Total de la compra: $" + total);
+function mostrarEstado(mensaje, error = false) {
+  estado.classList.toggle("error", error);
+  estado.textContent = mensaje;
 }
 
-// findIndex localiza el índice para reemplazar productos.
-function buscarIndiceProducto(nombre) {
-return productos.findIndex(producto => producto.nombre === nombre);
+function renderizarProductos() {
+  const consulta = normalizar(buscar.value);
+  const maximo = presupuesto.valueAsNumber;
+  const porcentaje = descuento.valueAsNumber;
+  const aplicarPresupuesto = presupuesto.validity.valid && Number.isFinite(maximo);
+  const aplicarDescuento = descuento.validity.valid && porcentaje > 0;
+  const visibles = productos.filter(producto =>
+    normalizar(producto.nombre).includes(consulta) &&
+    (!aplicarPresupuesto || (producto.precio <= maximo && producto.stock > 0))
+  );
+
+  catalogo.innerHTML = visibles.map(producto => `
+    <article data-indice="${productos.indexOf(producto)}">
+      <h3></h3>
+      <p class="categoria"></p>
+      <p>Precio por unidad: <strong>${moneda.format(producto.precio)}</strong></p>
+      ${aplicarDescuento ? `<p class="descuento">Precio simulado: ${moneda.format(producto.precio * (1 - porcentaje / 100))}</p>` : ""}
+      <p>${producto.stock > 0 ? `Stock: ${producto.stock}` : "Sin stock"}</p>
+      <label>Cantidad<input type="number" min="1" max="${producto.stock}" step="1" value="1" ${producto.stock === 0 ? "disabled" : ""}></label>
+      <div class="actions">
+        <button type="button" data-accion="comprar" ${producto.stock === 0 ? "disabled" : ""}>Comprar</button>
+        <button type="button" class="secundario" data-accion="editar">Editar</button>
+        <button type="button" class="secundario" data-accion="eliminar">Eliminar</button>
+      </div>
+    </article>
+  `).join("");
+
+  Array.from(catalogo.children).forEach((tarjeta, indice) => {
+    tarjeta.querySelector("h3").textContent = visibles[indice].nombre;
+    tarjeta.querySelector(".categoria").textContent = visibles[indice].categoria;
+  });
+
+  resultados.textContent = visibles.length
+    ? `${visibles.length} de ${productos.length} productos.`
+    : "No hay productos para mostrar.";
+
+  if (aplicarDescuento) {
+    resultados.textContent += " La simulación conserva el precio de compra.";
+  }
 }
 
-function mostrarProductos() {
-if (productos.length === 0) {
-alert("No hay productos disponibles.");
-return;
+function restablecerFormulario() {
+  productoEditado = null;
+  formulario.reset();
+  tituloFormulario.textContent = "Agregar producto";
+  guardar.textContent = "Agregar producto";
+  cancelar.hidden = true;
 }
 
-let listado = "PRODUCTOS DISPONIBLES\n";
+formulario.addEventListener("submit", evento => {
+  evento.preventDefault();
+  const campos = formulario.elements;
+  const nombre = campos.nombre.value.trim();
+  const categoria = campos.categoria.value.trim();
+  const precio = campos.precio.valueAsNumber;
+  const stock = campos.stock.valueAsNumber;
 
-for (const producto of productos) {
-const detalle =
-"Producto: " + producto.nombre +
-" | Precio: $" + producto.precio +
-" | Categoría: " + producto.categoria +
-" | Stock: " + producto.stock;
+  if (!formulario.checkValidity() || !nombre || !categoria || !Number.isSafeInteger(stock)) {
+    mostrarEstado("Ingresá un nombre, una categoría, un precio positivo con hasta dos decimales y un stock entero de cero o más.", true);
+    return;
+  }
 
-listado += detalle + "\n";
-console.log(detalle);
-}
+  if (productos.some(producto => producto !== productoEditado && normalizar(producto.nombre) === normalizar(nombre))) {
+    mostrarEstado("Ya existe un producto con ese nombre.", true);
+    return;
+  }
 
-alert(listado);
-}
+  const nuevo = new Producto(nombre, precio, categoria, stock);
+  const mensaje = productoEditado ? `Se actualizó ${nombre}.` : `Se agregó ${nombre}.`;
+  if (productoEditado) {
+    productos.splice(productos.indexOf(productoEditado), 1, nuevo);
+  } else {
+    productos.push(nuevo);
+  }
 
-// Solicita y valida los datos para crear un objeto.
-function pedirNuevoProducto() {
-const entradaNombre = pedirDato("Ingresá el nombre del producto:");
+  restablecerFormulario();
+  buscar.value = "";
+  presupuesto.value = "";
+  renderizarProductos();
+  mostrarEstado(mensaje);
+});
 
-if (entradaNombre === null) {
-return null;
-}
+cancelar.addEventListener("click", () => {
+  restablecerFormulario();
+  mostrarEstado("Edición cancelada.");
+});
 
-const nombre = entradaNombre.trim().toLowerCase();
+confirmarEliminacion.addEventListener("close", () => {
+  const producto = productoParaEliminar;
+  productoParaEliminar = null;
 
-if (nombre === "") {
-alert("El nombre no puede estar vacío.");
-return null;
-}
+  if (confirmarEliminacion.returnValue !== "eliminar") {
+    mostrarEstado("Eliminación cancelada.");
+    return;
+  }
 
-if (buscarIndiceProducto(nombre) !== -1) {
-alert("Ese producto ya está en la lista.");
-return null;
-}
+  productos.splice(productos.indexOf(producto), 1);
+  if (producto === productoEditado) {
+    restablecerFormulario();
+  }
+  renderizarProductos();
+  buscar.focus();
+  mostrarEstado(`Se eliminó ${producto.nombre}.`);
+});
 
-const entradaPrecio = pedirDato("Ingresá el precio:");
+catalogo.addEventListener("click", evento => {
+  const boton = evento.target.closest("button[data-accion]");
+  if (!boton) {
+    return;
+  }
 
-if (entradaPrecio === null) {
-return null;
-}
+  const tarjeta = boton.closest("article");
+  const indice = Number(tarjeta.dataset.indice);
+  const producto = productos[indice];
 
-const entradaCategoria = pedirDato("Ingresá la categoría:");
+  switch (boton.dataset.accion) {
+    case "comprar": {
+      const cantidad = tarjeta.querySelector("input").valueAsNumber;
+      if (!Number.isSafeInteger(cantidad) || cantidad <= 0) {
+        mostrarEstado("Ingresá una cantidad entera mayor que cero.", true);
+        return;
+      }
 
-if (entradaCategoria === null) {
-return null;
-}
+      const total = producto.precio * cantidad;
+      if (!Number.isFinite(total)) {
+        mostrarEstado("El total es demasiado grande. Revisá la cantidad.", true);
+        return;
+      }
 
-const entradaStock = pedirDato("Ingresá el stock inicial:");
+      if (!producto.vender(cantidad)) {
+        mostrarEstado(`Stock insuficiente de ${producto.nombre}. Disponibles: ${producto.stock}.`, true);
+        return;
+      }
 
-if (entradaStock === null) {
-return null;
-}
+      if (producto === productoEditado) {
+        formulario.elements.stock.value = producto.stock;
+      }
+      renderizarProductos();
+      mostrarEstado(`Compraste ${cantidad} unidad(es) de ${producto.nombre} por ${moneda.format(total)}. Stock restante: ${producto.stock}.`);
+      break;
+    }
+    case "editar":
+      productoEditado = producto;
+      formulario.elements.nombre.value = producto.nombre;
+      formulario.elements.categoria.value = producto.categoria;
+      formulario.elements.precio.value = producto.precio;
+      formulario.elements.stock.value = producto.stock;
+      tituloFormulario.textContent = `Editar ${producto.nombre}`;
+      guardar.textContent = "Guardar cambios";
+      cancelar.hidden = false;
+      formulario.elements.nombre.focus();
+      mostrarEstado(`Podés modificar los datos de ${producto.nombre} en el formulario.`);
+      break;
+    case "eliminar":
+      productoParaEliminar = producto;
+      detalleEliminacion.textContent = `¿Querés eliminar ${producto.nombre} del catálogo?`;
+      confirmarEliminacion.returnValue = "";
+      confirmarEliminacion.showModal();
+      break;
+  }
+});
 
-const precio = Number(entradaPrecio);
-const categoria = entradaCategoria.trim().toLowerCase();
-const stock = Number(entradaStock);
+[buscar, presupuesto, descuento].forEach(campo => {
+  campo.addEventListener("input", () => {
+    if (!campo.validity.valid) {
+      mostrarEstado(campo === presupuesto ? "Ingresá un presupuesto válido de cero o más." : "Ingresá un descuento entre 0 y 100.", true);
+    } else {
+      mostrarEstado("");
+    }
+    renderizarProductos();
+  });
+});
 
-if (
-!Number.isFinite(precio) ||
-precio <= 0 ||
-categoria === "" ||
-entradaStock.trim() === "" ||
-!Number.isInteger(stock) ||
-stock < 0
-) {
-alert(
-"Ingresá un precio positivo, una categoría y un stock entero de cero o más."
-);
-return null;
-}
-
-return new Producto(nombre, precio, categoria, stock);
-}
-
-function agregarProducto() {
-const nuevoProducto = pedirNuevoProducto();
-
-if (nuevoProducto === null) {
-return;
-}
-
-productos.push(nuevoProducto);
-alert("Se agregó el producto: " + nuevoProducto.nombre);
-}
-
-function eliminarProducto() {
-if (productos.length === 0) {
-alert("No hay productos para eliminar.");
-return;
-}
-
-const eliminado = productos.pop();
-alert("Se ha eliminado el elemento: " + eliminado.nombre);
-}
-
-function buscarProducto() {
-const entrada = pedirDato("¿Qué producto querés buscar?");
-
-if (entrada === null) {
-return;
-}
-
-const nombre = entrada.trim().toLowerCase();
-// Búsqueda con find: devuelve el objeto que coincide con el nombre.
-const producto = productos.find(producto => producto.nombre === nombre);
-if (!producto) {
-alert("Ese producto no está en la lista.");
-console.log("Producto no encontrado:", nombre);
-return;
-}
-console.log("Producto encontrado:", producto);
-alert("Producto: " + producto.nombre + "\nPrecio: $" + producto.precio + "\nCategoría: " + producto.categoria + "\nStock: " + producto.stock);
-}
-
-function reemplazarProducto() {
-const entrada = pedirDato("¿Qué producto querés reemplazar?");
-
-if (entrada === null) {
-return;
-}
-
-const nombre = entrada.trim().toLowerCase();
-const indice = buscarIndiceProducto(nombre);
-
-if (indice === -1) {
-alert("Ese producto no está en la lista.");
-return;
-}
-
-const nuevoProducto = pedirNuevoProducto();
-
-if (nuevoProducto === null) {
-return;
-}
-
-productos.splice(indice, 1, nuevoProducto);
-alert("Se reemplazó " + nombre + " por " + nuevoProducto.nombre);
-}
-
-function realizarCompra() {
-if (productos.length === 0) {
-alert("No hay productos para comprar.");
-return;
-}
-
-mostrarProductos();
-
-const entrada = pedirDato("¿Qué producto querés comprar?");
-
-if (entrada === null) {
-return;
-}
-
-const nombre = entrada.trim().toLowerCase();
-const indice = buscarIndiceProducto(nombre);
-
-if (indice === -1) {
-alert("Ese producto no está disponible.");
-return;
-}
-
-const entradaCantidad = pedirDato("¿Cuántas unidades querés comprar?");
-
-if (entradaCantidad === null) {
-return;
-}
-
-const cantidad = Number(entradaCantidad);
-
-if (!Number.isInteger(cantidad) || cantidad <= 0) {
-alert("Ingresá una cantidad entera mayor que cero.");
-return;
-}
-
-const producto = productos[indice];
-const total = calcularTotal(producto.precio, cantidad);
-
-if (!Number.isFinite(total)) {
-alert("El total es demasiado grande. Revisá los valores.");
-return;
-}
-
-  // Ejecuta el método de instancia que modifica el stock.
-const ventaRealizada = producto.vender(cantidad);
-
-if (ventaRealizada) {
-mostrarTotal(total);
-alert("Stock restante de " + producto.nombre + ": " + producto.stock);
-
-// Verificación de las propiedades después de la venta.
-console.log("Producto después de la compra:", producto);
-console.log("Stock final: " + producto.stock);
-} else {
-alert("Stock insuficiente. Unidades disponibles: " + producto.stock);
-}
-}
-
-// Búsqueda con filter: productos con stock dentro del presupuesto por unidad.
-function filtrarPorPresupuesto() {
-const entrada = pedirDato("¿Cuánto podés gastar como máximo por unidad?");
-if (entrada === null) return;
-const presupuesto = Number(entrada);
-if (entrada.trim() === "" || !Number.isFinite(presupuesto) || presupuesto <= 0) {
-alert("Ingresá un presupuesto positivo.");
-return;
-}
-const encontrados = productos.filter(producto => producto.precio <= presupuesto && producto.stock > 0);
-console.log("Productos dentro del presupuesto:", encontrados);
-if (encontrados.length === 0) {
-alert("No hay productos con stock dentro de ese presupuesto.");
-return;
-}
-let listado = "PRODUCTOS DENTRO DE TU PRESUPUESTO\n";
-for (const producto of encontrados) {
-listado += producto.nombre + " | $" + producto.precio + " | Stock: " + producto.stock + "\n";
-}
-alert(listado);
-}
-
-// Transformación con map: crea una nueva lista con precios con descuento.
-// Esta simulación conserva los precios originales del catálogo.
-function simularDescuento() {
-if (productos.length === 0) {
-alert("No hay productos para simular un descuento.");
-return;
-}
-const entrada = pedirDato("¿Qué porcentaje de descuento querés simular? (mayor que 0 y hasta 100)");
-if (entrada === null) return;
-const porcentaje = Number(entrada);
-if (!Number.isFinite(porcentaje) || porcentaje <= 0 || porcentaje > 100) {
-alert("Ingresá un porcentaje mayor que cero y menor o igual a 100.");
-return;
-}
-const productosConDescuento = productos.map(producto => ({
-nombre: producto.nombre,
-precioOriginal: producto.precio,
-precioConDescuento: Number((producto.precio * (1 - porcentaje / 100)).toFixed(2)),
-categoria: producto.categoria,
-stock: producto.stock
-}));
-console.log("Simulación de descuento del " + porcentaje + "%:", productosConDescuento);
-let listado = "SIMULACIÓN DE DESCUENTO: " + porcentaje + "%\n";
-for (const producto of productosConDescuento) {
-listado += producto.nombre + ": $" + producto.precioOriginal + " → $" + producto.precioConDescuento + "\n";
-}
-alert(listado + "\nEsta simulación no modifica los precios de compra.");
-}
-
-let continuar = true;
-
-while (continuar) {
-const opcion = pedirDato(
-"SIMULADOR DE COMPRAS\n" +
-"1. Mostrar productos\n" +
-"2. Agregar producto\n" +
-"3. Eliminar el último producto\n" +
-"4. Buscar producto\n" +
-"5. Reemplazar producto\n" +
-"6. Realizar una compra\n" +
-"7. Filtrar productos por presupuesto\n" +
-"8. Simular un descuento\n" +
-"0. Salir"
-);
-
-switch (opcion) {
-case "1":
-mostrarProductos();
-break;
-case "2":
-agregarProducto();
-break;
-case "3":
-eliminarProducto();
-break;
-case "4":
-buscarProducto();
-break;
-case "5":
-reemplazarProducto();
-break;
-case "6":
-realizarCompra();
-break;
-case "7":
-filtrarPorPresupuesto();
-break;
-case "8":
-simularDescuento();
-break;
-case "0":
-case null:
-continuar = false;
-alert("¡Gracias por usar el simulador!");
-break;
-default:
-alert("Elegí una opción válida.");
-}
-}
+renderizarProductos();

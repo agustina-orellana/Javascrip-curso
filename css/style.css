@@ -27,3 +27,10 @@ article label { margin: .8rem 0; }
 dialog { max-width: min(28rem, 90vw); padding: 1.25rem; border: 1px solid #dce2f0; border-radius: .75rem; color: inherit; }
 dialog::backdrop { background: #202a4280; }
 dialog form.actions { display: flex; }
+
+.compras { margin-bottom: 1.25rem; }
+#resumen-compras { margin-bottom: 0; font-weight: 600; }
+#carga-productos { max-width: 66rem; margin: 1rem auto; padding: 1rem; background: #eeedff; border-radius: .5rem; }
+#reintentar { display: block; margin: 1rem auto; }
+#reintentar[hidden] { display: none; }
+

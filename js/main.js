@@ -17,6 +17,8 @@ class Producto {
 }
 
 const claveCatalogo = "simulador-compras.catalogo";
+const claveEstado = "simulador-compras.estado";
+let compras = [];
 let productos = [
   new Producto("pan", 1500, "panadería", 20),
   new Producto("leche", 1800, "lácteos", 15),
@@ -55,29 +57,65 @@ function mostrarEstado(mensaje, error = false) {
   estado.textContent = mensaje;
 }
 
+function productoValido(p) {
+  return p && typeof p.nombre === "string" && p.nombre.trim() &&
+    typeof p.categoria === "string" && p.categoria.trim() &&
+    Number.isFinite(p.precio) && p.precio > 0 &&
+    Number.isSafeInteger(p.stock) && p.stock >= 0;
+}
+
+function compraValida(c) {
+  return c && typeof c.nombre === "string" && c.nombre.trim() &&
+    Number.isFinite(c.precio) && c.precio > 0 &&
+    Number.isSafeInteger(c.cantidad) && c.cantidad > 0 &&
+    Number.isFinite(c.total) && c.total === c.precio * c.cantidad;
+}
+
 function cargarCatalogo() {
   try {
-    const guardados = JSON.parse(localStorage.getItem(claveCatalogo) ?? "null");
-    productos = guardados?.map(({ nombre, precio, categoria, stock }) =>
+    const guardado = localStorage.getItem(claveEstado);
+    const datos = guardado !== null ? JSON.parse(guardado) : {
+      productos: JSON.parse(localStorage.getItem(claveCatalogo) ?? "null") ?? productos,
+      compras: []
+    };
+    if (!datos || !Array.isArray(datos.productos) || !datos.productos.every(productoValido) ||
+        !Array.isArray(datos.compras) || !datos.compras.every(compraValida)) {
+      throw new Error("Datos inválidos");
+    }
+    productos = datos.productos.map(({ nombre, precio, categoria, stock }) =>
       new Producto(nombre, precio, categoria, stock)
-    ) ?? productos;
+    );
+    compras = datos.compras;
   } catch {
-    mostrarEstado("No se pudo leer el catálogo guardado. Se muestran los productos iniciales.", true);
+    mostrarEstado("No se pudieron leer los datos guardados. Se muestran los productos iniciales y el resumen vacío.", true);
   }
 }
 
-function guardarCatalogo(siguienteCatalogo) {
+function guardarCatalogo(siguienteCatalogo, siguientesCompras = compras) {
   try {
-    localStorage.setItem(claveCatalogo, JSON.stringify(siguienteCatalogo));
+    // Una sola escritura mantiene sincronizados el stock y las compras.
+    localStorage.setItem(claveEstado, JSON.stringify({
+      productos: siguienteCatalogo, compras: siguientesCompras
+    }));
     productos = siguienteCatalogo;
+    compras = siguientesCompras;
     return true;
   } catch {
-    mostrarEstado("No se pudo guardar el cambio en el navegador.", true);
+    mostrarEstado("No se pudo guardar el cambio en el navegador. No se realizó la operación.", true);
     return false;
   }
 }
 
+function renderizarCompras() {
+  const unidades = compras.reduce((total, compra) => total + compra.cantidad, 0);
+  const total = compras.reduce((acumulado, compra) => acumulado + compra.total, 0);
+  document.querySelector("#resumen-compras").textContent = compras.length
+    ? compras.length + " compra(s) · " + unidades + " unidad(es) · Total acumulado: " + moneda.format(total)
+    : "Todavía no registraste compras. Total acumulado: " + moneda.format(0);
+}
+
 function renderizarProductos() {
+  renderizarCompras();
   vaciar.disabled = productos.length === 0;
   const consulta = normalizar(buscar.value);
   const maximo = presupuesto.valueAsNumber;
@@ -233,7 +271,8 @@ catalogo.addEventListener("click", evento => {
 
       const siguienteCatalogo = [...productos];
       siguienteCatalogo[indice] = actualizado;
-      if (!guardarCatalogo(siguienteCatalogo)) {
+      const siguientesCompras = [...compras, { nombre, precio, cantidad, total }];
+      if (!guardarCatalogo(siguienteCatalogo, siguientesCompras)) {
         return;
       }
 
@@ -309,6 +348,19 @@ descuento.addEventListener("input", () => {
 cargarCatalogo();
 renderizarProductos();
 
-setTimeout(() => {
-  avisoCupon.textContent = "Podés consultar un cupón para simular un descuento en el catálogo.";
-}, 3000);
+function mostrarAvisoCupon() {
+  const maximo = presupuesto.valueAsNumber;
+  const disponibles = productos.filter(producto => producto.stock > 0);
+  let detalle;
+  if (productos.length === 0) {
+    detalle = "El catálogo está vacío. Agregá un producto para consultar el cupón.";
+  } else if (presupuesto.validity.valid && Number.isFinite(maximo)) {
+    const accesibles = disponibles.filter(producto => producto.precio <= maximo);
+    detalle = `Hay ${accesibles.length} producto(s) con stock dentro de tu presupuesto de ${moneda.format(maximo)} por unidad.`;
+  } else {
+    detalle = `Hay ${disponibles.length} producto(s) con stock. Ingresá un presupuesto para filtrar por precio.`;
+  }
+  avisoCupon.textContent = detalle + " Podés consultar un cupón para simular un descuento; la compra mantiene el precio original.";
+}
+
+setTimeout(mostrarAvisoCupon, 3000);

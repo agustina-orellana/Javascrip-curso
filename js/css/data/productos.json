@@ -1,0 +1,7 @@
+[
+{ "nombre": "pan", "precio": 1500, "categoria": "panadería", "stock": 20 },
+{ "nombre": "leche", "precio": 1800, "categoria": "lácteos", "stock": 15 },
+{ "nombre": "arroz", "precio": 2200, "categoria": "almacén", "stock": 30 },
+{ "nombre": "huevos", "precio": 300, "categoria": "almacén", "stock": 40 },
+{ "nombre": "manzanas", "precio": 500, "categoria": "frutas", "stock": 25 }
+]

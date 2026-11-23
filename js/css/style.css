@@ -30,3 +30,7 @@ dialog form.actions { display: flex; }
 
 .compras { margin-bottom: 1.25rem; }
 #resumen-compras { margin-bottom: 0; font-weight: 600; }
+#carga-productos { max-width: 66rem; margin: 1rem auto; padding: 1rem; background: #eeedff; border-radius: .5rem; }
+#reintentar { display: block; margin: 1rem auto; }
+#reintentar[hidden] { display: none; }
+

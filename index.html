@@ -3,12 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Simulador de compras | Pre-entrega 9</title>
+<title>Simulador de compras | Pre-entrega 10</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.css">
 <link rel="stylesheet" href="css/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js" defer></script>
 <script src="js/main.js" defer></script>
 </head>
 <body>
-<header><div><p>Pre-entrega 9 · JavaScript</p><h1>Simulador de compras</h1><p>Explorá el catálogo y registrá compras.</p></div></header>
+<header><div><p>Pre-entrega 10 · JavaScript</p><h1>Simulador de compras</h1><p>Explorá el catálogo y registrá compras.</p></div></header>
+<p id="carga-productos" role="status" aria-live="polite" hidden>Cargando productos…</p>
+<button id="reintentar" type="button" hidden>Reintentar carga de productos</button>
 <main>
 <section aria-labelledby="form-title">
 <h2 id="form-title">Agregar producto</h2>

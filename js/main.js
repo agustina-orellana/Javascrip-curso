@@ -19,13 +19,7 @@ class Producto {
 const claveCatalogo = "simulador-compras.catalogo";
 const claveEstado = "simulador-compras.estado";
 let compras = [];
-let productos = [
-  new Producto("pan", 1500, "panadería", 20),
-  new Producto("leche", 1800, "lácteos", 15),
-  new Producto("arroz", 2200, "almacén", 30),
-  new Producto("huevos", 300, "almacén", 40),
-  new Producto("manzanas", 500, "frutas", 25)
-];
+let productos = [];
 
 const vaciar = document.querySelector("#vaciar");
 const tituloEliminacion = document.querySelector("#titulo-eliminacion");
@@ -74,8 +68,10 @@ function compraValida(c) {
 function cargarCatalogo() {
   try {
     const guardado = localStorage.getItem(claveEstado);
+    const anterior = localStorage.getItem(claveCatalogo);
+    if (guardado === null && anterior === null) return false;
     const datos = guardado !== null ? JSON.parse(guardado) : {
-      productos: JSON.parse(localStorage.getItem(claveCatalogo) ?? "null") ?? productos,
+      productos: JSON.parse(anterior),
       compras: []
     };
     if (!datos || !Array.isArray(datos.productos) || !datos.productos.every(productoValido) ||
@@ -86,8 +82,10 @@ function cargarCatalogo() {
       new Producto(nombre, precio, categoria, stock)
     );
     compras = datos.compras;
+    return true;
   } catch {
-    mostrarEstado("No se pudieron leer los datos guardados. Se muestran los productos iniciales y el resumen vacío.", true);
+    mostrarEstado("No se pudieron leer los datos guardados. Se intentará cargar el catálogo desde el archivo JSON.", true);
+    return false;
   }
 }
 
@@ -345,8 +343,74 @@ descuento.addEventListener("input", () => {
   estadoCupon.textContent = "";
 });
 
-cargarCatalogo();
-renderizarProductos();
+function notificar(mensaje, error = false) {
+  mostrarEstado(mensaje, error);
+  if (typeof Toastify === "function") {
+    Toastify({
+      text: mensaje,
+      duration: error ? 7000 : 4000,
+      close: true,
+      gravity: "top",
+      position: "right",
+      escapeMarkup: true,
+      ariaLive: error ? "assertive" : "polite",
+      style: { background: error ? "#8a2525" : "#125735" }
+    }).showToast();
+  }
+}
+
+let cargandoProductos = false;
+
+async function cargarProductos() {
+  if (cargandoProductos) return;
+  cargandoProductos = true;
+  const carga = document.querySelector("#carga-productos");
+  const reintentar = document.querySelector("#reintentar");
+  const principal = document.querySelector("main");
+  carga.hidden = false;
+  reintentar.hidden = true;
+  principal.inert = true;
+  catalogo.setAttribute("aria-busy", "true");
+  const recuperado = cargarCatalogo();
+  try {
+    const respuesta = await fetch("./data/productos.json", {
+      cache: "no-store",
+      signal: AbortSignal.timeout(10000)
+    });
+    if (!respuesta.ok) {
+      throw new Error("El servidor respondió con el estado " + respuesta.status + ".");
+    }
+    const datos = await respuesta.json();
+    if (!Array.isArray(datos) || !datos.every(productoValido)) {
+      throw new Error("El archivo de productos no tiene el formato esperado.");
+    }
+    if (!recuperado) {
+      productos = datos.map(({ nombre, precio, categoria, stock }) =>
+        new Producto(nombre, precio, categoria, stock)
+      );
+    }
+    renderizarProductos();
+    notificar(recuperado
+      ? "Datos consultados. Se conservó tu catálogo y tus compras guardadas."
+      : "Productos cargados desde el archivo JSON.");
+  } catch (error) {
+    renderizarProductos();
+    const detalle = error.name === "TimeoutError"
+      ? "La consulta tardó demasiado."
+      : error.message;
+    notificar("No se pudieron cargar los productos. " + detalle +
+      (recuperado ? " Tu catálogo guardado sigue disponible." : " Podés reintentar la carga."), true);
+    reintentar.hidden = false;
+  } finally {
+    carga.hidden = true;
+    principal.inert = false;
+    catalogo.setAttribute("aria-busy", "false");
+    cargandoProductos = false;
+  }
+}
+
+document.querySelector("#reintentar").addEventListener("click", cargarProductos);
+cargarProductos();
 
 function mostrarAvisoCupon() {
   const maximo = presupuesto.valueAsNumber;
